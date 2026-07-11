@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coach Dashboard</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg: #0e0f11;
+  --surface: #16181c;
+  --surface2: #1e2126;
+  --border: #2a2d34;
+  --text: #e8eaed;
+  --text-muted: #6b7280;
+  --text-dim: #9ca3af;
+  --accent: #3b82f6;
+  --accent-dim: #1d4ed8;
+  --green: #22c55e;
+  --yellow: #eab308;
+  --red: #ef4444;
+  --orange: #f97316;
+  --purple: #a855f7;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Inter', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+.logo { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--accent); letter-spacing: 0.05em; text-transform: uppercase; }
+.header-right { display: flex; align-items: center; gap: 10px; }
+.last-refresh { font-size: 11px; color: var(--text-muted); font-family: var(--mono); }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: 6px; border: none;
+  font-family: var(--sans); font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: all 0.15s;
+}
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { background: var(--accent-dim); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-ghost { background: var(--surface2); color: var(--text-dim); border: 1px solid var(--border); }
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.btn-danger { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+.btn-danger:hover { background: rgba(239,68,68,0.25); }
+
+.container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+.tab {
+  padding: 8px 18px; background: none; border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted); font-family: var(--sans); font-size: 13px; font-weight: 500;
+  cursor: pointer; margin-bottom: -1px; transition: all 0.15s;
+}
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab:hover:not(.active) { color: var(--text-dim); }
+
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.mb16 { margin-bottom: 16px; }
+.mb24 { margin-bottom: 24px; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px;
+}
+.card-sm { padding: 14px 16px; }
+
+.section-label {
+  font-family: var(--mono); font-size: 10px; font-weight: 500;
+  color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em;
+  margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+}
+.section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+.stat-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; font-family: var(--mono); margin-bottom: 4px; }
+.stat-value { font-size: 30px; font-weight: 700; line-height: 1; font-family: var(--mono); }
+.stat-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+.color-blue { color: var(--accent); }
+.color-purple { color: var(--purple); }
+.color-green { color: var(--green); }
+.color-yellow { color: var(--yellow); }
+.color-red { color: var(--red); }
+.color-orange { color: var(--orange); }
+
+.status-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+  font-family: var(--mono);
+}
+.pill-fresh { background: rgba(34,197,94,0.15); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+.pill-optimal { background: rgba(59,130,246,0.15); color: var(--accent); border: 1px solid rgba(59,130,246,0.3); }
+.pill-tired { background: rgba(234,179,8,0.15); color: var(--yellow); border: 1px solid rgba(234,179,8,0.3); }
+.pill-risk { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+.pill-grey { background: rgba(107,114,128,0.15); color: var(--text-muted); border: 1px solid rgba(107,114,128,0.3); }
+
+.activity-row {
+  display: flex; align-items: flex-start; gap: 14px;
+  padding: 12px 0; border-bottom: 1px solid var(--border);
+}
+.activity-row:last-child { border-bottom: none; }
+.activity-icon {
+  width: 34px; height: 34px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; flex-shrink: 0;
+}
+.icon-ride { background: rgba(59,130,246,0.15); }
+.icon-run { background: rgba(34,197,94,0.15); }
+.icon-other { background: rgba(107,114,128,0.15); }
+.activity-main { flex: 1; min-width: 0; }
+.activity-name { font-weight: 500; font-size: 13px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.activity-meta { font-size: 11px; color: var(--text-muted); font-family: var(--mono); display: flex; flex-wrap: wrap; gap: 8px; }
+.activity-date { font-size: 11px; color: var(--text-muted); }
+.activity-load-col { text-align: right; flex-shrink: 0; }
+.load-num { font-family: var(--mono); font-size: 16px; font-weight: 600; }
+.load-label { font-size: 10px; color: var(--text-muted); }
+
+.zone-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.zone-label { font-family: var(--mono); font-size: 11px; color: var(--text-muted); width: 24px; flex-shrink: 0; }
+.zone-bar-bg { flex: 1; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+.zone-bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+.zone-pct { font-family: var(--mono); font-size: 11px; color: var(--text-muted); width: 36px; text-align: right; }
+
+.week-dots { display: flex; gap: 5px; }
+.week-dot {
+  flex: 1; height: 5px; border-radius: 3px;
+  background: var(--border); position: relative;
+}
+.week-dot.active { background: var(--accent); }
+.week-dot.today { background: var(--green); }
+.week-dot-labels { display: flex; justify-content: space-between; margin-top: 5px; }
+.week-dot-label { font-family: var(--mono); font-size: 10px; color: var(--text-muted); flex: 1; text-align: center; }
+
+.trend-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.trend-row:last-child { border-bottom: none; }
+.trend-label { font-size: 12px; color: var(--text-dim); }
+.trend-value { font-family: var(--mono); font-size: 12px; font-weight: 500; }
+
+.loading-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 50vh; gap: 14px; }
+.spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-family: var(--mono); font-size: 12px; color: var(--text-muted); }
+
+.error-box { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 16px; color: #fca5a5; font-size: 13px; line-height: 1.6; }
+
+.settings-row { display: flex; align-items: flex-start; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--border); gap: 20px; }
+.settings-row:last-child { border-bottom: none; }
+.settings-label { font-size: 13px; font-weight: 500; }
+.settings-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+input[type="text"], input[type="password"] {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+  color: var(--text); font-family: var(--mono); font-size: 12px;
+  padding: 7px 12px; width: 260px; outline: none; transition: border-color 0.15s;
+}
+input:focus { border-color: var(--accent); }
+
+.alert { padding: 10px 14px; border-radius: 7px; font-size: 13px; margin-bottom: 16px; border: 1px solid; }
+.alert-info { background: rgba(59,130,246,0.1); border-color: rgba(59,130,246,0.3); color: #93c5fd; }
+.alert-warning { background: rgba(234,179,8,0.1); border-color: rgba(234,179,8,0.3); color: #fde68a; }
+
+/* ZWO Modal */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 24px; }
+.modal { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; width: 100%; max-width: 520px; padding: 24px; }
+.modal-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.modal-desc { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; }
+.zwo-preview { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 12px; font-family: var(--mono); font-size: 10px; color: var(--text-muted); max-height: 220px; overflow-y: auto; white-space: pre; margin-bottom: 16px; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+/* Plan styles */
+.plan-day { display: flex; align-items: flex-start; gap: 12px; padding: 11px 14px; border-radius: 8px; margin-bottom: 6px; border: 1px solid var(--border); background: var(--surface2); transition: border-color 0.15s; }
+.plan-day:hover { border-color: rgba(59,130,246,0.4); }
+.plan-day.today { border-color: var(--accent); background: rgba(59,130,246,0.06); }
+.plan-day.rest { opacity: 0.45; }
+.plan-day.completed { border-color: rgba(34,197,94,0.4); background: rgba(34,197,94,0.04); }
+.plan-day.past { opacity: 0.55; }
+.day-label { font-family: var(--mono); font-size: 10px; color: var(--text-muted); width: 30px; flex-shrink: 0; padding-top: 2px; line-height: 1.4; }
+.day-content { flex: 1; }
+.day-title { font-weight: 500; font-size: 13px; margin-bottom: 2px; }
+.day-desc { font-size: 12px; color: var(--text-dim); line-height: 1.4; }
+.day-tags { display: flex; gap: 5px; margin-top: 7px; flex-wrap: wrap; align-items: center; }
+.day-tag { font-family: var(--mono); font-size: 10px; padding: 2px 7px; border-radius: 4px; background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); }
+.day-tag-blue { border-color: rgba(59,130,246,0.4); color: var(--accent); background: rgba(59,130,246,0.08); }
+
+.plan-week-hdr { font-family: var(--mono); font-size: 11px; color: var(--text-muted); margin-bottom: 8px; margin-top: 20px; display: flex; justify-content: space-between; }
+.plan-week-hdr:first-child { margin-top: 0; }
+
+@media (max-width: 768px) {
+  .grid-3 { grid-template-columns: 1fr 1fr; }
+  .grid-4 { grid-template-columns: 1fr 1fr; }
+  .grid-2 { grid-template-columns: 1fr; }
+  .container { padding: 14px; }
+  input[type="text"], input[type="password"] { width: 100%; }
+  .settings-row { flex-direction: column; }
+}
+@media (max-width: 480px) {
+  .grid-3 { grid-template-columns: 1fr; }
+  .grid-4 { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <span class="logo">⚡ Coach</span>
+    <span style="font-size:12px; color:var(--text-muted);" id="headerAthlete">aaraiza</span>
+  </div>
+  <div class="header-right">
+    <span class="last-refresh" id="lastRefresh">—</span>
+    <button class="btn btn-ghost btn-sm" onclick="showTab('settings')">⚙</button>
+    <button class="btn btn-primary btn-sm" id="refreshBtn" onclick="fullRefresh()">↻ Refresh</button>
+  </div>
+</div>
+
+<div class="container">
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('dashboard')" id="tab-dashboard">Dashboard</button>
+    <button class="tab" onclick="showTab('activities')" id="tab-activities">Activities</button>
+    <button class="tab" onclick="showTab('plan')" id="tab-plan">Training Plan</button>
+    <button class="tab" onclick="showTab('settings')" id="tab-settings">Settings</button>
+  </div>
+
+  <div id="view-dashboard">
+    <div id="dashContent">
+      <div class="loading-screen">
+        <div class="spinner"></div>
+        <div class="loading-text" id="loadMsg">Initializing...</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-activities" style="display:none">
+    <div id="actContent">
+      <div class="loading-screen"><div class="loading-text">Refresh dashboard first</div></div>
+    </div>
+  </div>
+
+  <div id="view-plan" style="display:none">
+    <div id="planContent">
+      <div class="loading-screen"><div class="loading-text">Refresh dashboard first</div></div>
+    </div>
+  </div>
+
+  <div id="view-settings" style="display:none">
+    <div class="card mb24">
+      <div class="section-label">Connection</div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-label">Intervals.icu API Key</div>
+          <div class="settings-sub">Settings → scroll to bottom → API Key</div>
+        </div>
+        <input type="password" id="apiKeyInput" placeholder="your api key" />
+      </div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-label">Athlete ID</div>
+          <div class="settings-sub">Visible in your profile URL</div>
+        </div>
+        <input type="text" id="athleteIdInput" placeholder="i424592" />
+      </div>
+      <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="saveSettings()">Save & Refresh</button>
+        <button class="btn btn-danger" onclick="clearSettings()">Clear Settings</button>
+      </div>
+      <div id="settingsMsg" style="margin-top:10px; font-size:12px; color:var(--green); display:none;"></div>
+    </div>
+
+    <div class="card mb24">
+      <div class="section-label">Training Parameters</div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-label">Indoor FTP (Zwift)</div>
+          <div class="settings-sub">Used for zone calculations and .zwo files</div>
+        </div>
+        <input type="text" id="ftpInput" placeholder="272" />
+      </div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-label">Outdoor eFTP</div>
+          <div class="settings-sub">Used for outdoor ride analysis</div>
+        </div>
+        <input type="text" id="eftpInput" placeholder="248" />
+      </div>
+      <div style="margin-top:16px;">
+        <button class="btn btn-primary" onclick="saveSettings()">Save</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">About</div>
+      <p style="font-size:13px; color:var(--text-dim); line-height:1.7;">
+        Pulls live data from Intervals.icu on every refresh. No data is sent anywhere except Intervals.icu.<br><br>
+        <strong>Zwift workouts:</strong> Download .zwo files from the Training Plan tab. Drag into:<br>
+        <code style="font-family:var(--mono); font-size:11px; background:var(--bg); padding:2px 6px; border-radius:4px; display:inline-block; margin-top:4px;">Documents/Zwift/Workouts/[your_user_id]/</code><br><br>
+        <strong>Coaching discussions:</strong> Return to Claude.ai for plan adjustments, analysis, and coaching conversations.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ZWO Modal -->
+<div class="modal-overlay" id="zwoModal" style="display:none" onclick="if(event.target===this)closeZwo()">
+  <div class="modal">
+    <div class="modal-title" id="zwoTitle">Workout</div>
+    <div class="modal-desc" id="zwoDesc"></div>
+    <div class="zwo-preview" id="zwoPreview"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeZwo()">Cancel</button>
+      <button class="btn btn-primary" onclick="dlZwo()">⬇ Download .zwo</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+const S = {
+  apiKey: '',
+  athleteId: 'i424592',
+  ftp: 272,
+  eftp: 248,
+  wellness: [],
+  activities: [],
+  plan: [],
+  currentZwo: null,
+  loaded: false
+};
+
+// ── Settings ───────────────────────────────────────────────────────────────
+function loadSettings() {
+  S.apiKey   = localStorage.getItem('c_key') || '';
+  S.athleteId= localStorage.getItem('c_aid') || 'i424592';
+  S.ftp      = parseInt(localStorage.getItem('c_ftp') || '272');
+  S.eftp     = parseInt(localStorage.getItem('c_eftp') || '248');
+  document.getElementById('apiKeyInput').value   = S.apiKey;
+  document.getElementById('athleteIdInput').value= S.athleteId;
+  document.getElementById('ftpInput').value      = S.ftp;
+  document.getElementById('eftpInput').value     = S.eftp;
+}
+
+function saveSettings() {
+  S.apiKey   = document.getElementById('apiKeyInput').value.trim();
+  S.athleteId= document.getElementById('athleteIdInput').value.trim() || 'i424592';
+  S.ftp      = parseInt(document.getElementById('ftpInput').value) || 272;
+  S.eftp     = parseInt(document.getElementById('eftpInput').value) || 248;
+  localStorage.setItem('c_key',  S.apiKey);
+  localStorage.setItem('c_aid',  S.athleteId);
+  localStorage.setItem('c_ftp',  S.ftp);
+  localStorage.setItem('c_eftp', S.eftp);
+  const m = document.getElementById('settingsMsg');
+  m.textContent = '✓ Saved'; m.style.display='block';
+  setTimeout(()=>m.style.display='none', 2000);
+  fullRefresh();
+}
+
+function clearSettings() {
+  if (!confirm('Clear all settings?')) return;
+  ['c_key','c_aid','c_ftp','c_eftp','c_plan'].forEach(k=>localStorage.removeItem(k));
+  loadSettings();
+}
+
+// ── Tabs ───────────────────────────────────────────────────────────────────
+function showTab(name) {
+  ['dashboard','activities','plan','settings'].forEach(t=>{
+    document.getElementById('view-'+t).style.display = t===name?'block':'none';
+    document.getElementById('tab-'+t).classList.toggle('active', t===name);
+  });
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+const toDate = s => s ? new Date(s) : new Date();
+const fmtDate = s => toDate(s).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+const fmtShort = s => toDate(s).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+const toISO = d => d.toISOString().split('T')[0];
+const today = () => toISO(new Date());
+const addDays = (d,n) => { const x=new Date(d); x.setDate(x.getDate()+n); return toISO(x); };
+const dayAbbr = d => new Date(d).toLocaleDateString('en-US',{weekday:'short'}).slice(0,2);
+
+function secToTime(s) {
+  if (!s) return '—';
+  const h=Math.floor(s/3600), m=Math.floor((s%3600)/60);
+  return h>0 ? `${h}h${String(m).padStart(2,'0')}m` : `${m}m`;
+}
+function distKm(m) { return m ? (m/1000).toFixed(1)+' km' : '—'; }
+function sign(n) { return n>0?'+':'' }
+
+function tsbStatus(tsb) {
+  if (tsb===null||tsb===undefined) return {label:'Unknown',cls:'pill-grey'};
+  if (tsb>10)  return {label:'Fresh ↑',cls:'pill-fresh'};
+  if (tsb>=-10) return {label:'Optimal',cls:'pill-optimal'};
+  if (tsb>=-30) return {label:'Tired ↓',cls:'pill-tired'};
+  return {label:'High Risk',cls:'pill-risk'};
+}
+function tsbColor(tsb) {
+  if (tsb===null||tsb===undefined) return 'var(--text-muted)';
+  if (tsb>10) return 'var(--green)';
+  if (tsb>=-10) return 'var(--accent)';
+  if (tsb>=-30) return 'var(--yellow)';
+  return 'var(--red)';
+}
+function loadColor(l) {
+  if (!l) return 'var(--text-muted)';
+  if (l>150) return 'var(--red)';
+  if (l>100) return 'var(--orange)';
+  if (l>50)  return 'var(--accent)';
+  return 'var(--text-dim)';
+}
+function actIcon(type) {
+  const t=(type||'').toLowerCase();
+  if (t.includes('ride')||t.includes('cycl')||t.includes('virtual')) return {e:'🚴',c:'icon-ride'};
+  if (t.includes('run')) return {e:'🏃',c:'icon-run'};
+  if (t.includes('swim')) return {e:'🏊',c:'icon-other'};
+  if (t.includes('walk')) return {e:'🚶',c:'icon-other'};
+  return {e:'⚡',c:'icon-other'};
+}
+
+// ── API ────────────────────────────────────────────────────────────────────
+async function apiFetch(endpoint) {
+  if (!S.apiKey) throw new Error('No API key. Go to Settings.');
+  const url = `https://intervals.icu/api/v1/athlete/${S.athleteId}/${endpoint}`;
+  const r = await fetch(url, {
+    headers: { 'Authorization': 'Basic ' + btoa('API_KEY:' + S.apiKey) }
+  });
+  if (!r.ok) {
+    const txt = await r.text().catch(()=>'');
+    throw new Error(`Intervals.icu: ${r.status} ${r.statusText}. ${txt}`);
+  }
+  return r.json();
+}
+
+function setMsg(msg) {
+  const el = document.getElementById('loadMsg');
+  if (el) el.textContent = msg;
+}
+
+// ── Main Refresh ───────────────────────────────────────────────────────────
+async function fullRefresh() {
+  if (!S.apiKey) { showTab('settings'); return; }
+
+  const btn = document.getElementById('refreshBtn');
+  btn.disabled=true; btn.textContent='↻ Loading...';
+
+  document.getElementById('dashContent').innerHTML = `
+    <div class="loading-screen">
+      <div class="spinner"></div>
+      <div class="loading-text" id="loadMsg">Connecting to Intervals.icu...</div>
+    </div>`;
+
+  try {
+    const t = today();
+    const from60 = addDays(t, -60);
+    const from42 = addDays(t, -42);
+
+    setMsg('Fetching data from Intervals.icu...');
+    const wellness = await apiFetch(`wellness?oldest=${from60}&newest=${t}`);
+
+    // Strava-linked accounts block /activities — use /events as the reliable fallback
+    let activitiesRaw = [];
+    try {
+      const evts = await apiFetch(`events?oldest=${from42}&newest=${t}&category=ACTIVITY`);
+      activitiesRaw = Array.isArray(evts) ? evts : [];
+    } catch(e) {
+      console.warn('Events fetch failed:', e.message);
+    }
+
+    S.wellness = Array.isArray(wellness) ? wellness : [];
+    S.activities = activitiesRaw
+      .filter(a => a.start_date_local || a.startDate || a.start_date)
+      .map(a => ({
+        ...a,
+        start_date_local: a.start_date_local || a.startDate || a.start_date,
+        name: a.name || a.title || 'Activity',
+        moving_time: a.moving_time || a.elapsed_time || a.duration,
+        distance: a.distance,
+        total_elevation_gain: a.total_elevation_gain || a.elevation_gain,
+        average_heartrate: a.average_heartrate || a.avg_hr,
+        average_watts: a.average_watts || a.avg_power,
+        training_load: a.training_load || a.load,
+        type: a.type || a.sport_type || 'Ride'
+      }))
+      .sort((a,b) => new Date(b.start_date_local) - new Date(a.start_date_local));
+
+    setMsg('Building dashboard...');
+
+    // Fitness numbers from wellness endpoint
+    let ctl=null, atl=null, tsb=null;
+    if (S.wellness.length > 0) {
+      const wEntries = [...S.wellness].reverse();
+      const latest = wEntries.find(w => w.ctl != null) || wEntries[0];
+      if (latest) {
+        ctl = latest.ctl != null ? Math.round(latest.ctl) : null;
+        atl = latest.atl != null ? Math.round(latest.atl) : null;
+        tsb = latest.tsb != null ? Math.round(latest.tsb) : null;
+      }
+    }
+
+    // Load stored plan
+    const storedPlan = localStorage.getItem('c_plan');
+    if (storedPlan) S.plan = JSON.parse(storedPlan);
+    if (!S.plan || S.plan.length===0) S.plan = buildDefaultPlan();
+
+    renderDashboard(ctl, atl, tsb);
+    renderActivities();
+    renderPlan();
+
+    S.loaded = true;
+    document.getElementById('lastRefresh').textContent = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+
+  } catch(err) {
+    document.getElementById('dashContent').innerHTML = `
+      <div class="error-box">
+        <strong>Failed to load data</strong><br><br>
+        ${err.message}<br><br>
+        <strong>Common fixes:</strong><br>
+        • Check your API key in Settings<br>
+        • Make sure you're connected to the internet<br>
+        • If opening as a local file, you may need to host it (GitHub Pages / Netlify) due to browser security restrictions on local files
+      </div>`;
+    console.error(err);
+  }
+
+  btn.disabled=false; btn.textContent='↻ Refresh';
+}
+
+// ── Auto-Analysis Engine ──────────────────────────────────────────────────
+function autoAnalyze(ctl, atl, tsb) {
+  const acts = S.activities;
+  const well = S.wellness;
+  const lines = [];
+
+  // Week boundaries
+  const now = new Date();
+  const dow = (now.getDay()+6)%7;
+  const thisMonDate = new Date(now); thisMonDate.setDate(now.getDate()-dow); thisMonDate.setHours(0,0,0,0);
+  const lastMonDate = new Date(thisMonDate); lastMonDate.setDate(thisMonDate.getDate()-7);
+  const twoMonDate = new Date(thisMonDate); twoMonDate.setDate(thisMonDate.getDate()-14);
+
+  const thisWeekActs = acts.filter(a=>new Date(a.start_date_local)>=thisMonDate);
+  const lastWeekActs = acts.filter(a=>new Date(a.start_date_local)>=lastMonDate && new Date(a.start_date_local)<thisMonDate);
+  const twoWeekActs  = acts.filter(a=>new Date(a.start_date_local)>=twoMonDate  && new Date(a.start_date_local)<lastMonDate);
+
+  const wkLoad  = thisWeekActs.reduce((s,a)=>s+(a.training_load||0),0);
+  const lwLoad  = lastWeekActs.reduce((s,a)=>s+(a.training_load||0),0);
+  const twLoad  = twoWeekActs.reduce((s,a)=>s+(a.training_load||0),0);
+
+  // CTL trend
+  const ctl4wk = well.length>=28 ? well[well.length-28]?.ctl : null;
+  const ctlDelta = (ctl!=null && ctl4wk!=null) ? Math.round(ctl - ctl4wk) : null;
+
+  // Days since last activity
+  const lastAct = acts[0];
+  const daysSince = lastAct ? Math.floor((now - new Date(lastAct.start_date_local)) / 86400000) : null;
+
+  // Fitness assessment
+  if (ctl !== null) {
+    if (ctl >= 50) lines.push(`Fitness (CTL ${ctl}) is solid — you have a real base to work with.`);
+    else if (ctl >= 35) lines.push(`Fitness (CTL ${ctl}) is moderate. Enough base to train effectively but room to build.`);
+    else lines.push(`Fitness (CTL ${ctl}) is on the low side. Priority is aerobic base before any intensity.`);
+  }
+
+  // TSB / Form
+  if (tsb !== null) {
+    if (tsb > 15) lines.push(`Form is very fresh (TSB +${tsb}) — you are well rested and ready to train hard.`);
+    else if (tsb > 5) lines.push(`Form is fresh (TSB +${tsb}) — good position to add load this week.`);
+    else if (tsb >= -10) lines.push(`Form is optimal (TSB ${tsb}) — you are absorbing training well.`);
+    else if (tsb >= -25) lines.push(`Form is tired (TSB ${tsb}) — recovery should be prioritised before pushing again.`);
+    else lines.push(`Form is deep in the red (TSB ${tsb}) — you are carrying significant fatigue. Back off.`);
+  }
+
+  // CTL trend
+  if (ctlDelta !== null) {
+    if (ctlDelta > 5) lines.push(`CTL is up ${ctlDelta} points over 4 weeks — fitness is building.`);
+    else if (ctlDelta >= 0) lines.push(`CTL is stable over 4 weeks (+${ctlDelta}) — maintaining but not building.`);
+    else lines.push(`CTL is down ${Math.abs(ctlDelta)} points over 4 weeks — fitness has declined. Expected given the schedule.`);
+  }
+
+  // Weekly load trend
+  if (lwLoad > 0 || wkLoad > 0) {
+    const trend = wkLoad > lwLoad ? '↑' : wkLoad < lwLoad ? '↓' : '→';
+    lines.push(`Weekly load: this week ${wkLoad}, last week ${lwLoad}, two weeks ago ${twLoad}. ${trend} ${wkLoad>lwLoad?'Load increasing.':wkLoad<lwLoad?'Load decreasing.':'Load stable.'}`);
+  }
+
+  // Consistency check
+  const totalActs3wk = thisWeekActs.length + lastWeekActs.length + twoWeekActs.length;
+  if (totalActs3wk >= 7) lines.push(`Consistency is strong — ${totalActs3wk} sessions across 3 weeks.`);
+  else if (totalActs3wk >= 4) lines.push(`Consistency is acceptable — ${totalActs3wk} sessions across 3 weeks. More volume needed on available days.`);
+  else lines.push(`Consistency is low — only ${totalActs3wk} sessions across 3 weeks. Given the MICU schedule this is expected; protect weekend training.`);
+
+  // Days since last activity
+  if (daysSince !== null) {
+    if (daysSince === 0) lines.push(`Trained today.`);
+    else if (daysSince === 1) lines.push(`Last activity was yesterday.`);
+    else if (daysSince <= 3) lines.push(`Last activity ${daysSince} days ago — on track.`);
+    else if (daysSince <= 6) lines.push(`${daysSince} days since last activity — time to get back on it.`);
+    else lines.push(`${daysSince} days since last activity — significant gap. Do not let this extend further.`);
+  }
+
+  // Ride/run split
+  const rides = acts.slice(0,10).filter(a=>(a.type||'').toLowerCase().includes('ride')||(a.type||'').toLowerCase().includes('cycl')||(a.type||'').toLowerCase().includes('virtual'));
+  const runs  = acts.slice(0,10).filter(a=>(a.type||'').toLowerCase().includes('run'));
+  if (runs.length === 0 && acts.length > 3) lines.push(`No running in recent activities — Wednesday run slot needs to be protected.`);
+
+  return lines;
+}
+
+// ── Dashboard Render ───────────────────────────────────────────────────────
+function renderDashboard(ctl, atl, tsb) {
+  const status = tsbStatus(tsb);
+
+  // Week activities (Mon–Sun)
+  const now = new Date();
+  const dayOfWeek = (now.getDay()+6)%7;
+  const monDate = new Date(now); monDate.setDate(now.getDate()-dayOfWeek);
+  monDate.setHours(0,0,0,0);
+
+  const weekActs = S.activities.filter(a => new Date(a.start_date_local) >= monDate);
+  const weekLoad = weekActs.reduce((s,a)=>s+(a.training_load||0),0);
+  const weekDist = weekActs.reduce((s,a)=>s+(a.distance||0),0);
+  const weekTime = weekActs.reduce((s,a)=>s+(a.moving_time||0),0);
+
+  const ctl4wk = S.wellness.length>=28 ? S.wellness[S.wellness.length-28]?.ctl : null;
+  const ctlDelta = (ctl!==null && ctl4wk!==null) ? Math.round(ctl - ctl4wk) : null;
+  const last = S.activities[0];
+
+  const weekDots = [0,1,2,3,4,5,6].map(i=>{
+    const d = new Date(monDate); d.setDate(monDate.getDate()+i);
+    const ds = toISO(d);
+    const hasAct = S.activities.some(a=>a.start_date_local?.startsWith(ds));
+    const isToday = ds===today();
+    return `<div class="week-dot ${hasAct?'active':''} ${isToday?'today':''}"></div>`;
+  }).join('');
+
+  const dayLabels = ['Mo','Tu','We','Th','Fr','Sa','Su'].map(d=>`<div class="week-dot-label">${d}</div>`).join('');
+
+  // Auto-analysis
+  const analysisLines = autoAnalyze(ctl, atl, tsb);
+  const analysisHTML = analysisLines.map(l=>`<div style="padding:5px 0; border-bottom:1px solid var(--border); font-size:13px; color:var(--text-dim); line-height:1.5;">${l}</div>`).join('');
+
+  document.getElementById('dashContent').innerHTML = `
+    <div class="grid-4 mb24">
+      <div class="card card-sm">
+        <div class="stat-label">Fitness · CTL</div>
+        <div class="stat-value color-blue">${ctl!=null?Math.round(ctl):'—'}</div>
+        <div class="stat-sub">${ctlDelta!==null ? `${sign(ctlDelta)}${ctlDelta} vs 4wk ago` : '42-day avg'}</div>
+      </div>
+      <div class="card card-sm">
+        <div class="stat-label">Fatigue · ATL</div>
+        <div class="stat-value color-purple">${atl!=null?Math.round(atl):'—'}</div>
+        <div class="stat-sub">7-day avg load</div>
+      </div>
+      <div class="card card-sm">
+        <div class="stat-label">Form · TSB</div>
+        <div class="stat-value" style="color:${tsbColor(tsb)}">${tsb!=null?(sign(tsb)+Math.round(tsb)):'—'}</div>
+        <div class="stat-sub"><span class="status-pill ${status.cls}">${status.label}</span></div>
+      </div>
+      <div class="card card-sm">
+        <div class="stat-label">Week Load</div>
+        <div class="stat-value color-orange">${weekLoad||0}</div>
+        <div class="stat-sub">${weekActs.length} activit${weekActs.length===1?'y':'ies'} · ${secToTime(weekTime)}</div>
+      </div>
+    </div>
+
+    <div class="card mb24">
+      <div class="section-label">Coaching Analysis <span style="font-size:10px;color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0;">· auto-generated from your data</span></div>
+      ${analysisHTML || '<div style="color:var(--text-muted);font-size:13px;">Not enough data to analyze yet.</div>'}
+    </div>
+
+    <div class="grid-2 mb24">
+      <div class="card">
+        <div class="section-label">This Week</div>
+        <div class="week-dots mb16">${weekDots}</div>
+        <div class="week-dot-labels mb16">${dayLabels}</div>
+        <div class="trend-row"><span class="trend-label">Activities</span><span class="trend-value">${weekActs.length}</span></div>
+        <div class="trend-row"><span class="trend-label">Distance</span><span class="trend-value">${distKm(weekDist)}</span></div>
+        <div class="trend-row"><span class="trend-label">Duration</span><span class="trend-value">${secToTime(weekTime)}</span></div>
+        <div class="trend-row"><span class="trend-label">Total Load</span><span class="trend-value color-orange">${weekLoad}</span></div>
+        <div class="trend-row"><span class="trend-label">Last Activity</span><span class="trend-value">${last?fmtDate(last.start_date_local):'None'}</span></div>
+      </div>
+
+      <div class="card">
+        <div class="section-label">Recent Activities</div>
+        ${S.activities.slice(0,5).map(a=>{
+          const ic = actIcon(a.type);
+          return `
+          <div class="activity-row">
+            <div class="activity-icon ${ic.c}">${ic.e}</div>
+            <div class="activity-main">
+              <div class="activity-name">${a.name||'Activity'}</div>
+              <div class="activity-meta">
+                <span>${fmtShort(a.start_date_local)}</span>
+                <span>${secToTime(a.moving_time)}</span>
+                ${a.distance?`<span>${distKm(a.distance)}</span>`:''}
+                ${a.average_heartrate?`<span>${Math.round(a.average_heartrate)}bpm</span>`:''}
+                ${a.average_watts?`<span>${Math.round(a.average_watts)}w</span>`:''}
+              </div>
+            </div>
+            <div class="activity-load-col">
+              <div class="load-num" style="color:${loadColor(a.training_load)}">${a.training_load??'—'}</div>
+              <div class="load-label">load</div>
+            </div>
+          </div>`;
+        }).join('') || '<div style="color:var(--text-muted);font-size:13px;padding:12px 0;">No recent activities</div>'}
+      </div>
+    </div>
+
+    <div class="card mb24">
+      <div class="section-label">Upcoming — Next 5 Days</div>
+      ${renderUpcoming()}
+    </div>
+  `;
+}
+
+function renderUpcoming() {
+  const upcoming = S.plan.filter(d=>d.date>=today()).slice(0,5);
+  if (!upcoming.length) return '<div style="color:var(--text-muted);font-size:13px;">No plan loaded. Go to Training Plan tab.</div>';
+  return upcoming.map(d=>planDayHTML(d)).join('');
+}
+
+// ── Activities Render ──────────────────────────────────────────────────────
+function renderActivities() {
+  const html = S.activities.map(a=>{
+    const ic = actIcon(a.type);
+    const pct = a.average_watts ? Math.round((a.average_watts/S.ftp)*100) : null;
+    return `
+      <div class="activity-row">
+        <div class="activity-icon ${ic.c}">${ic.e}</div>
+        <div class="activity-main">
+          <div class="activity-name">${a.name||'Activity'}</div>
+          <div class="activity-meta">
+            <span>${fmtDate(a.start_date_local)}</span>
+            <span>${secToTime(a.moving_time)}</span>
+            ${a.distance?`<span>${distKm(a.distance)}</span>`:''}
+            ${a.total_elevation_gain?`<span>↑${Math.round(a.total_elevation_gain)}m</span>`:''}
+            ${a.average_heartrate?`<span>${Math.round(a.average_heartrate)}bpm</span>`:''}
+            ${a.average_watts?`<span>${Math.round(a.average_watts)}w${pct?` · ${pct}% FTP`:''}</span>`:''}
+          </div>
+        </div>
+        <div class="activity-load-col">
+          <div class="load-num" style="color:${loadColor(a.training_load)}">${a.training_load??'—'}</div>
+          <div class="load-label">load</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('actContent').innerHTML = `
+    <div class="section-label">All Activities — Last 42 Days</div>
+    <div class="card">${html || '<div style="color:var(--text-muted);font-size:13px;padding:12px;">No activities found</div>'}</div>
+  `;
+}
+
+// ── Plan ───────────────────────────────────────────────────────────────────
+function buildDefaultPlan() {
+  // Real coaching plan — updated July 11 2026
+  // Schedule: VA MICU 7-7 Mon/Tue/Thu/Fri, Clinic Wed ~5pm done, weekends free
+  // Goal: maintain CTL 32, protect aerobic base through MICU block
+  return [
+    { date: "2026-07-12", type:"ride",  title:"Z2 Ride — Base Builder",       description:"90 min Z2. Early start, beat the NOLA heat. Outdoor if before 8am, Zwift otherwise. Minimum 90 min — extend if legs feel good.", duration:"90 min+", intensity:"Z2", zwift:true, zwiftTarget:"90min @ 178w" },
+    { date: "2026-07-13", type:"run",   title:"Easy Run — Knee Check",         description:"45 min easy run. Conversational pace only. This is a test — if right knee flares stop immediately and walk back. Do correctives after.", duration:"45 min", intensity:"easy", zwift:false },
+    { date: "2026-07-14", type:"rest",  title:"Rest — MICU Day 1",             description:"7-7 shift. Full rest. Sleep is the priority.", duration:"—", intensity:"rest", zwift:false },
+    { date: "2026-07-15", type:"rest",  title:"Rest — MICU Day 2",             description:"7-7 shift. Full rest.", duration:"—", intensity:"rest", zwift:false },
+    { date: "2026-07-16", type:"run",   title:"Wednesday Run",                  description:"35 min easy run after clinic. Done by 5pm so you have time. Conversational pace. This is your only weekday training window — protect it.", duration:"35 min", intensity:"easy", zwift:false },
+    { date: "2026-07-17", type:"rest",  title:"Rest — MICU Day 4",             description:"7-7 shift. Full rest.", duration:"—", intensity:"rest", zwift:false },
+    { date: "2026-07-18", type:"rest",  title:"Rest — MICU Day 5",             description:"7-7 shift. Full rest.", duration:"—", intensity:"rest", zwift:false },
+    { date: "2026-07-19", type:"ride",  title:"Long Ride — Weekly Anchor",     description:"Minimum 2 hrs Z2. This is the most important session of your week. Outdoor before 8am or Zwift. If riding outdoors go longer — this is where fitness is made.", duration:"2h+", intensity:"Z2", zwift:true, zwiftTarget:"120min @ 178w" },
+    { date: "2026-07-20", type:"ride",  title:"Sunday Ride + Correctives",     description:"60 min easy Zwift Z2. Followed by corrective routine — clamshells, single-leg bridges, hip abduction, figure-four stretch. 15 min. Non-negotiable.", duration:"60 min", intensity:"Z2", zwift:true, zwiftTarget:"60min @ 178w" },
+    { date: "2026-07-21", type:"rest",  title:"Rest — MICU",                   description:"7-7 shift. Rest.", duration:"—", intensity:"rest", zwift:false },
+    { date: "2026-07-22", type:"rest",  title:"Rest — MICU",                   description:"7-7 shift. Rest.", duration:"—", intensity:"rest", zwift:false },
+    { date: "2026-07-23", type:"run",   title:"Wednesday Run",                  description:"35 min easy run. Same as last week. If last Wednesday felt good, you can push to 40 min.", duration:"35–40 min", intensity:"easy", zwift:false },
+    { date: "2026-07-24", type:"rest",  title:"Rest — MICU",                   description:"7-7 shift. Rest.", duration:"—", intensity:"rest", zwift:false },
+    { date: "2026-07-25", type:"rest",  title:"Rest — MICU",                   description:"7-7 shift. Rest.", duration:"—", intensity:"rest", zwift:false },
+    { date: "2026-07-26", type:"ride",  title:"Long Ride — Weekly Anchor",     description:"2+ hrs Z2. Last clean weekend before schedule gets harder (nights start Aug 1). Make this one count.", duration:"2h+", intensity:"Z2", zwift:true, zwiftTarget:"120min @ 178w" },
+    { date: "2026-07-27", type:"ride",  title:"Sunday Ride",                   description:"60–90 min Z2. Correctives after.", duration:"60–90 min", intensity:"Z2", zwift:true, zwiftTarget:"75min @ 178w" },
+    { date: "2026-07-28", type:"rest",  title:"Rest — T-MICU Block Starts",    description:"New rotation. 7-day stretch coming Aug 1. Rest.", duration:"—", intensity:"rest", zwift:false },
+    { date: "2026-07-29", type:"rest",  title:"Rest",                           description:"Rest.", duration:"—", intensity:"rest", zwift:false },
+    { date: "2026-07-30", type:"run",   title:"Wednesday Run",                  description:"35–40 min easy. Protect this slot.", duration:"35–40 min", intensity:"easy", zwift:false },
+    { date: "2026-07-31", type:"rest",  title:"Rest",                           description:"Rest.", duration:"—", intensity:"rest", zwift:false },
+    { date: "2026-08-01", type:"ride",  title:"Saturday Ride — Pre-Night Block", description:"90 min Z2 before night shifts start. You have nights Sat/Sun Aug 1-2. Get this done in the morning.", duration:"90 min", intensity:"Z2", zwift:true, zwiftTarget:"90min @ 178w" },
+    { date: "2026-08-02", type:"rest",  title:"Rest — Night Call",             description:"Night call. Do not train. Sleep when you can.", duration:"—", intensity:"rest", zwift:false },
+  ];
+}
+
+function planDayHTML(day) {
+  const isToday = day.date===today();
+  const isPast = day.date<today();
+  const hasAct = S.activities.some(a=>a.start_date_local?.startsWith(day.date));
+  const isRest = day.type==='rest';
+
+  let cls = 'plan-day';
+  if (isToday) cls+=' today';
+  if (isRest) cls+=' rest';
+  if (hasAct) cls+=' completed';
+  if (isPast && !hasAct && !isRest) cls+=' past';
+
+  const zwiftBtn = day.zwift && day.zwiftTarget
+    ? `<button class="btn btn-ghost btn-sm" style="padding:2px 8px;font-size:10px;" onclick='openZwo(${JSON.stringify(day).replace(/'/g,"&#39;")})'>⬇ .zwo</button>`
+    : '';
+
+  const completedBadge = hasAct ? `<span class="day-tag" style="color:var(--green);border-color:rgba(34,197,94,0.3);">✓ done</span>` : '';
+
+  return `
+    <div class="${cls}">
+      <div class="day-label">${dayAbbr(day.date)}<br><span style="font-size:9px;">${day.date.slice(5)}</span></div>
+      <div class="day-content">
+        <div class="day-title">${isToday?'→ ':''}${hasAct?'✓ ':''}${day.title}</div>
+        <div class="day-desc">${day.description||''}</div>
+        <div class="day-tags">
+          ${day.duration&&day.duration!=='—'?`<span class="day-tag">${day.duration}</span>`:''}
+          ${day.intensity&&day.intensity!=='rest'?`<span class="day-tag day-tag-blue">${day.intensity}</span>`:''}
+          ${completedBadge}
+          ${zwiftBtn}
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderPlan() {
+  if (!S.plan||!S.plan.length) {
+    document.getElementById('planContent').innerHTML = '<div class="card"><div style="color:var(--text-muted);font-size:13px;">No plan. Refresh dashboard.</div></div>';
+    return;
+  }
+
+  // Group into weeks
+  const weeks = {};
+  S.plan.forEach(day=>{
+    const d = new Date(day.date);
+    const dow = (d.getDay()+6)%7;
+    const mon = new Date(d); mon.setDate(d.getDate()-dow);
+    const key = toISO(mon);
+    if (!weeks[key]) weeks[key]=[];
+    weeks[key].push(day);
+  });
+
+  let html = `
+    <div class="alert alert-info mb24">
+      Training plan is updated by your coach in the Claude conversation. Download .zwo files for Zwift sessions by clicking the ⬇ button on any workout.
+    </div>`;
+
+  Object.entries(weeks).sort((a,b)=>a[0]<b[0]?-1:1).forEach(([wk, days])=>{
+    const wkEnd = addDays(wk,6);
+    const wkLoad = days.reduce((s,d)=>{
+      const act = S.activities.find(a=>a.start_date_local?.startsWith(d.date));
+      return s+(act?.training_load||0);
+    },0);
+    html += `<div class="plan-week-hdr">
+      <span>Week of ${fmtShort(wk)} – ${fmtShort(wkEnd)}</span>
+      ${wkLoad>0?`<span style="color:var(--accent)">Actual load: ${wkLoad}</span>`:'<span style="color:var(--text-muted)">Planned</span>'}
+    </div>`;
+    html += days.map(d=>planDayHTML(d)).join('');
+  });
+
+  document.getElementById('planContent').innerHTML = html;
+}
+
+// ── ZWO ────────────────────────────────────────────────────────────────────
+function openZwo(day) {
+  S.currentZwo = day;
+  document.getElementById('zwoTitle').textContent = day.title;
+  document.getElementById('zwoDesc').textContent = `${day.description} | FTP: ${S.ftp}w | Target: ${day.zwiftTarget||''}`;
+  document.getElementById('zwoPreview').textContent = buildZwo(day);
+  document.getElementById('zwoModal').style.display='flex';
+}
+function closeZwo() { document.getElementById('zwoModal').style.display='none'; }
+
+function buildZwo(day) {
+  const ftp = S.ftp;
+  const target = day.zwiftTarget || '';
+  const name = (day.title||'Workout').replace(/[^a-zA-Z0-9 ]/g,'');
+  const desc = (day.description||'').replace(/[<>]/g,'');
+
+  let blocks = [];
+  blocks.push({type:'warmup', dur:600, pLow:0.42, pHigh:0.56});
+
+  // Parse target
+  const mxn = target.match(/(\d+)x(\d+)\s*min\s*@\s*(\d+)w/i);
+  const msec = target.match(/(\d+)x(\d+)\s*s\s*@\s*(\d+)w/i);
+  const msteady = target.match(/(\d+)\s*(min|h)\s*@\s*(\d+)w/i);
+
+  if (mxn) {
+    const [,reps,mins,watts] = mxn;
+    const p = parseInt(watts)/ftp;
+    const dur = parseInt(mins)*60;
+    const rest = Math.max(Math.round(dur*0.5), 120);
+    for (let i=0;i<parseInt(reps);i++) {
+      blocks.push({type:'steady', dur, p});
+      if (i<parseInt(reps)-1) blocks.push({type:'steady', dur:rest, p:0.5});
+    }
+  } else if (msteady) {
+    const [,amt,unit,watts] = msteady;
+    const dur = unit==='h' ? parseInt(amt)*3600 : parseInt(amt)*60;
+    const mainDur = Math.max(dur-1200, 600);
+    blocks.push({type:'steady', dur:mainDur, p:parseInt(watts)/ftp});
+  } else {
+    // Default Z2
+    const p = day.intensity==='Z3' ? 0.78 : day.intensity==='Z4' ? 0.88 : 0.65;
+    blocks.push({type:'steady', dur:2400, p});
+  }
+
+  blocks.push({type:'cooldown', dur:600, pLow:0.55, pHigh:0.35});
+
+  const toXml = b => {
+    if (b.type==='warmup')   return `        <Warmup Duration="${b.dur}" PowerLow="${b.pLow.toFixed(2)}" PowerHigh="${b.pHigh.toFixed(2)}" />`;
+    if (b.type==='cooldown') return `        <Cooldown Duration="${b.dur}" PowerLow="${b.pLow.toFixed(2)}" PowerHigh="${b.pHigh.toFixed(2)}" />`;
+    return `        <SteadyState Duration="${b.dur}" Power="${b.p.toFixed(2)}" />`;
+  };
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<workout_file>
+    <author>Claude Coach</author>
+    <name>${name}</name>
+    <description>${desc}</description>
+    <sportType>bike</sportType>
+    <tags></tags>
+    <workout>
+${blocks.map(toXml).join('\n')}
+    </workout>
+</workout_file>`;
+}
+
+function dlZwo() {
+  if (!S.currentZwo) return;
+  const content = buildZwo(S.currentZwo);
+  const blob = new Blob([content], {type:'application/xml'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url;
+  a.download = (S.currentZwo.title||'workout').replace(/[^a-zA-Z0-9]/g,'_')+'.zwo';
+  a.click();
+  URL.revokeObjectURL(url);
+  closeZwo();
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+loadSettings();
+if (S.apiKey) {
+  setTimeout(fullRefresh, 200);
+} else {
+  document.getElementById('dashContent').innerHTML = `
+    <div class="loading-screen">
+      <div class="card" style="max-width:380px;text-align:center;padding:32px;">
+        <div style="font-size:36px;margin-bottom:12px;">⚡</div>
+        <div style="font-size:16px;font-weight:600;margin-bottom:8px;">Coach Dashboard</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:20px;">Add your Intervals.icu API key to get started.</div>
+        <button class="btn btn-primary" onclick="showTab('settings')">Go to Settings →</button>
+      </div>
+    </div>`;
+}
+</script>
+</body>
+</html>
